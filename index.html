@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>珠玑妙算</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .game-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #2c3e50;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #ecf0f1;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .color-picker {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .color-btn {
+            width: 80px;
+            height: 80px;
+            margin: 0 15px;
+            border: 3px solid #34495e;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .color-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        .current-guess {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .guess-slot {
+            width: 80px;
+            height: 80px;
+            margin: 0 15px;
+            border: 3px solid #34495e;
+            border-radius: 15px;
+            background-color: #ecf0f1;
+            transition: all 0.3s ease;
+        }
+        .guess-feedback-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .feedback {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .feedback-slot {
+            width: 30px;
+            height: 30px;
+            margin: 0 15px;
+            border-radius: 50%;
+            background-color: #34495e;
+            border: 2px solid #2c3e50;
+            transition: all 0.3s ease;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 0 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .submit-btn {
+            background-color: #27ae60;
+            color: white;
+        }
+        .submit-btn:hover {
+            background-color: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        .reset-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .reset-btn:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        .history {
+            margin-top: 30px;
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .history h3 {
+            color: #ecf0f1;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .history-item {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #2c3e50;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .history-item:hover {
+            background-color: #1a252f;
+        }
+        .history-position {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 10px;
+        }
+        .history-feedback-slot {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid #2c3e50;
+            margin-bottom: 5px;
+        }
+        .history-guess-slot {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            border: 2px solid #34495e;
+        }
+        .status {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ecf0f1;
+            min-height: 30px;
+        }
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 20px;
+            color: #95a5a6;
+            font-size: 14px;
+        }
+        /* 左右布局 */
+        .game-content {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        .right-panel {
+            flex: 1;
+            min-width: 500px;
+        }
+        /* 规则样式 */
+        .rules {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .rules h3 {
+            color: #ecf0f1;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .rules ul {
+            color: #ecf0f1;
+            padding-left: 20px;
+            margin: 0;
+        }
+        .rules li {
+            margin-bottom: 10px;
+        }
+        .rules ul ul {
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        .black-dot, .white-dot, .gray-dot {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        .black-dot {
+            background-color: black;
+            border: 1px solid #ecf0f1;
+        }
+        .white-dot {
+            background-color: white;
+            border: 1px solid #ecf0f1;
+        }
+        .gray-dot {
+            background-color: #95a5a6;
+            border: 1px solid #ecf0f1;
+        }
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #34495e;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2c3e50;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1a252f;
+        }
+        /* 胜利动画效果 */
+        .victory-animation {
+            animation: victoryPulse 0.5s ease-in-out 3;
+        }
+        
+        @keyframes victoryPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .victory-glow {
+            animation: victoryGlow 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes victoryGlow {
+            from { box-shadow: 0 0 20px #27ae60, 0 0 40px #27ae60, 0 0 60px #27ae60; }
+            to { box-shadow: 0 0 40px #2ecc71, 0 0 80px #2ecc71, 0 0 120px #2ecc71; }
+        }
+        
+        .victory-text {
+            animation: victoryBounce 0.6s ease-in-out;
+            color: #2ecc71 !important;
+            text-shadow: 0 0 20px #2ecc71, 0 0 40px #2ecc71 !important;
+        }
+        
+        @keyframes victoryBounce {
+            0%, 100% { transform: translateY(0); }
+            25% { transform: translateY(-20px); }
+            50% { transform: translateY(0); }
+            75% { transform: translateY(-10px); }
+        }
+        
+        .guess-slot.victory {
+            animation: slotVictory 0.5s ease-in-out;
+            border-color: #2ecc71 !important;
+            box-shadow: 0 0 30px #2ecc71, inset 0 0 20px #2ecc71 !important;
+        }
+        
+        @keyframes slotVictory {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.2) rotate(180deg); }
+            100% { transform: scale(1) rotate(360deg); }
+        }
+        
+        /* 响应式布局 */
+        @media (max-width: 600px) {
+            .game-content {
+                flex-direction: column;
+            }
+            .left-panel, .right-panel {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>珠玑妙算</h1>
+        
+        <div class="game-content">
+            <div class="left-panel">
+                <div class="rules">
+                    <h3>游戏规则</h3>
+                    <ul>
+                        <li>游戏目标：在10次尝试内猜测出由4个颜色组成的密码</li>
+                        <li>颜色选择：从6种颜色中选择（红、蓝、绿、黄、紫、橙）</li>
+                        <li>重要规则：<strong>密码中每个颜色只出现一次，不重复</strong></li>
+                        <li>反馈机制：
+                            <ul>
+                                <li><span class="black-dot"></span> 黑色：颜色和位置都正确</li>
+                                <li><span class="white-dot"></span> 白色：颜色正确但位置错误</li>
+                                <li><span class="gray-dot"></span> 灰色：颜色和位置都不对</li>
+                            </ul>
+                        </li>
+                        <li>游戏结束：猜对密码或用完10次尝试</li>
+                    </ul>
+                </div>
+                
+                <div class="history" id="history">
+                    <h3>历史记录</h3>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="color-picker">
+                    <div class="color-btn" style="background-color: red;" data-color="red"></div>
+                    <div class="color-btn" style="background-color: blue;" data-color="blue"></div>
+                    <div class="color-btn" style="background-color: green;" data-color="green"></div>
+                    <div class="color-btn" style="background-color: yellow;" data-color="yellow"></div>
+                    <div class="color-btn" style="background-color: purple;" data-color="purple"></div>
+                    <div class="color-btn" style="background-color: orange;" data-color="orange"></div>
+                </div>
+                
+                <div class="guess-feedback-container">
+                    <div class="current-guess">
+                        <div class="guess-slot" data-index="0"></div>
+                        <div class="guess-slot" data-index="1"></div>
+                        <div class="guess-slot" data-index="2"></div>
+                        <div class="guess-slot" data-index="3"></div>
+                    </div>
+                    
+                    <div class="feedback">
+                        <div class="feedback-slot" data-index="0"></div>
+                        <div class="feedback-slot" data-index="1"></div>
+                        <div class="feedback-slot" data-index="2"></div>
+                        <div class="feedback-slot" data-index="3"></div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="submit-btn">提交猜测</button>
+                    <button class="reset-btn">重新开始</button>
+                </div>
+                
+                <div class="status" id="status">
+                    请选择颜色并提交猜测
+                </div>
+                
+                <div class="keyboard-hint">
+                    键盘操作: 1-6选择颜色, Enter提交, R重新开始, Backspace删除
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 游戏变量
+        let secretCode = [];
+        let currentGuess = [];
+        let attempts = 0;
+        const maxAttempts = 10;
+        const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+        
+        // 初始化游戏
+        function initGame() {
+            // 生成随机密码（每个颜色只出现一次）
+            secretCode = [];
+            const availableColors = [...colors];
+            for (let i = 0; i < 4; i++) {
+                const randomIndex = Math.floor(Math.random() * availableColors.length);
+                secretCode.push(availableColors[randomIndex]);
+                availableColors.splice(randomIndex, 1); // 移除已使用的颜色
+            }
+            console.log('密码:', secretCode); // 开发时用于调试
+            
+            // 重置游戏状态
+            currentGuess = [];
+            attempts = 0;
+            
+            // 清空界面
+            document.querySelectorAll('.guess-slot').forEach(slot => {
+                slot.style.backgroundColor = '';
+            });
+            document.querySelectorAll('.feedback-slot').forEach(slot => {
+                slot.style.backgroundColor = '#eee';
+            });
+            document.getElementById('history').innerHTML = '<h3>历史记录</h3>';
+            document.getElementById('status').textContent = '请选择颜色并提交猜测';
+        }
+        
+        // 初始化游戏
+        initGame();
+        
+        // 颜色选择
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (currentGuess.length < 4) {
+                    const color = this.dataset.color;
+                    currentGuess.push(color);
+                    
+                    // 更新界面
+                    const slots = document.querySelectorAll('.guess-slot');
+                    slots[currentGuess.length - 1].style.backgroundColor = color;
+                }
+            });
+        });
+        
+        // 提交猜测
+        document.querySelector('.submit-btn').addEventListener('click', function() {
+            if (currentGuess.length === 4) {
+                attempts++;
+                
+                // 计算反馈
+                const feedback = calculateFeedback(currentGuess, secretCode);
+                
+                // 显示反馈
+                const feedbackSlots = document.querySelectorAll('.feedback-slot');
+                feedbackSlots.forEach((slot, index) => {
+                    slot.style.backgroundColor = feedback[index] || '#eee';
+                });
+                
+                // 添加到历史记录
+                addToHistory(currentGuess, feedback);
+                
+                // 检查游戏是否结束
+                if (checkWin(currentGuess, secretCode)) {
+                    // 胜利！触发炫酷效果
+                    triggerVictoryEffects();
+                    document.getElementById('status').textContent = `🎉 恭喜你！在第 ${attempts} 次尝试中猜对了密码！ 🎉`;
+                } else if (attempts >= maxAttempts) {
+                    document.getElementById('status').textContent = `游戏结束！密码是: ${secretCode.map(color => color).join(', ')}`;
+                } else {
+                    // 重置当前猜测
+                    currentGuess = [];
+                    document.querySelectorAll('.guess-slot').forEach(slot => {
+                        slot.style.backgroundColor = '';
+                    });
+                    document.querySelectorAll('.feedback-slot').forEach(slot => {
+                        slot.style.backgroundColor = '#eee';
+                    });
+                }
+            }
+        });
+        
+        // 重新开始
+        document.querySelector('.reset-btn').addEventListener('click', initGame);
+        
+        // 键盘支持
+        document.addEventListener('keydown', function(e) {
+            // 数字键 1-6 选择颜色
+            if (e.key >= '1' && e.key <= '6') {
+                const colorIndex = parseInt(e.key) - 1;
+                if (colorIndex < colors.length && currentGuess.length < 4) {
+                    const color = colors[colorIndex];
+                    currentGuess.push(color);
+                    
+                    // 更新界面
+                    const slots = document.querySelectorAll('.guess-slot');
+                    slots[currentGuess.length - 1].style.backgroundColor = color;
+                }
+            }
+            
+            // 回车键提交猜测
+            if (e.key === 'Enter') {
+                document.querySelector('.submit-btn').click();
+            }
+            
+            // R键重新开始
+            if (e.key === 'r' || e.key === 'R') {
+                initGame();
+            }
+            
+            // 退格键删除最后一个颜色
+            if (e.key === 'Backspace' && currentGuess.length > 0) {
+                currentGuess.pop();
+                
+                // 更新界面
+                const slots = document.querySelectorAll('.guess-slot');
+                slots[currentGuess.length].style.backgroundColor = '';
+            }
+        });
+        
+        // 计算反馈（颜色不重复，简化逻辑）
+        function calculateFeedback(guess, code) {
+            const feedback = [];
+            
+            for (let i = 0; i < 4; i++) {
+                if (guess[i] === code[i]) {
+                    feedback[i] = 'black'; // 位置和颜色都正确
+                } else if (code.includes(guess[i])) {
+                    feedback[i] = 'white'; // 颜色正确但位置不对
+                } else {
+                    feedback[i] = '#95a5a6'; // 颜色和位置都不对
+                }
+            }
+            
+            return feedback;
+        }
+        
+        // 检查是否猜对
+        function checkWin(guess, code) {
+            return guess.every((color, index) => color === code[index]);
+        }
+        
+        // 触发胜利效果
+        function triggerVictoryEffects() {
+            // 1. 彩花效果
+            const duration = 3000;
+            const end = Date.now() + duration;
+            
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
+                });
+                
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+            
+            // 2. 添加胜利动画类
+            const gameContainer = document.querySelector('.game-container');
+            gameContainer.classList.add('victory-animation');
+            
+            // 3. 状态文字动画
+            const status = document.getElementById('status');
+            status.classList.add('victory-text');
+            
+            // 4. 猜测槽发光效果
+            const guessSlots = document.querySelectorAll('.guess-slot');
+            guessSlots.forEach(slot => {
+                slot.classList.add('victory');
+            });
+            
+            // 5. 播放胜利音效（使用Web Audio API生成简单音效）
+            playVictorySound();
+        }
+        
+        // 播放胜利音效
+        function playVictorySound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // 创建简单的胜利音效
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C大调和弦
+            const now = audioContext.currentTime;
+            
+            notes.forEach((freq, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = freq;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, now + index * 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + index * 0.1 + 0.5);
+                
+                oscillator.start(now + index * 0.1);
+                oscillator.stop(now + index * 0.1 + 0.5);
+            });
+        }
+        
+        // 添加到历史记录
+        function addToHistory(guess, feedback) {
+            const history = document.getElementById('history');
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            
+            // 每个位置的反馈和猜测
+            for (let i = 0; i < 4; i++) {
+                const positionDiv = document.createElement('div');
+                positionDiv.className = 'history-position';
+                
+                // 反馈部分
+                const feedbackSlot = document.createElement('div');
+                feedbackSlot.className = 'history-feedback-slot';
+                feedbackSlot.style.backgroundColor = feedback[i] || '#95a5a6';
+                
+                // 猜测部分
+                const guessSlot = document.createElement('div');
+                guessSlot.className = 'history-guess-slot';
+                guessSlot.style.backgroundColor = guess[i];
+                
+                positionDiv.appendChild(feedbackSlot);
+                positionDiv.appendChild(guessSlot);
+                historyItem.appendChild(positionDiv);
+            }
+            
+            history.appendChild(historyItem);
+        }
+    </script>
+</body>
+</html>
